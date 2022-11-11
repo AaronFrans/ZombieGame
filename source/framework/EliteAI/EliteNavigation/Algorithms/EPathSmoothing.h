@@ -81,20 +81,83 @@ namespace Elite
 				//Local
 				const auto& portal = portals[portalIdx];
 
+
+
 				//--- RIGHT CHECK ---
 				//1. See if moving funnel inwards - RIGHT
+				Vector2 newRightLeg = portal.Line.p1 - apexPos;
+
+				float rightInwards = rightLeg.Cross(newRightLeg);
+				if (rightInwards >= 0)
+				{
+
 					//2. See if new line degenerates a line segment - RIGHT
+					float legsCrossed = newRightLeg.Cross(leftLeg);
+					if (legsCrossed >= 0)
+					{
+						rightLeg = newRightLeg;
+						rightLegIdx++;
+					}
+					else
+					{
+						apexPos += leftLeg;
+						apexIdx = leftLegIdx;
+						portalIdx = ++leftLegIdx;
+						rightLegIdx = leftLegIdx;
+
+						vPath.push_back(apexPos);
+
+						if (portalIdx < amtPortals)
+						{
+							rightLeg = portals[rightLegIdx].Line.p1 - apexPos;
+							leftLeg = portals[leftLegIdx].Line.p2 - apexPos;
+							continue;
+						}
+					}
+				}
+
+
 
 
 				//--- LEFT CHECK ---
 				//1. See if moving funnel inwards - LEFT
 
-					//2. See if new line degenerates a line segment - LEFT
+				Vector2 newLeftLeg = portal.Line.p2 - apexPos;
+
+				float leftInwards = leftLeg.Cross(newLeftLeg);
+				if (leftInwards <= 0)
+				{
+
+					//2. //2. See if new line degenerates a line segment - LEFT
+					float legsCrossed = newLeftLeg.Cross(rightLeg);
+					if (legsCrossed <= 0)
+					{
+						leftLeg = newLeftLeg;
+						leftLegIdx++;
+					}
+					else
+					{
+						apexPos += rightLeg;
+						apexIdx = rightLegIdx;
+						portalIdx = ++rightLegIdx;
+						leftLegIdx = rightLegIdx;
+
+						vPath.push_back(apexPos);
+
+						if (portalIdx < amtPortals)
+						{
+							rightLeg = portals[rightLegIdx].Line.p1 - apexPos;
+							leftLeg = portals[leftLegIdx].Line.p2 - apexPos;
+							continue;
+						}
+					}
+				}
+
 
 			}
 
 			// Add last path point (You can use the last portal p1 or p2 points as both are equal to the endPoint of the path
-
+			vPath.push_back(portals[amtPortals - 1].Line.p1);
 			return vPath;
 		}
 	private:
