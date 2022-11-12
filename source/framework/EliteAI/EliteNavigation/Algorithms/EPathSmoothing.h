@@ -85,18 +85,19 @@ namespace Elite
 
 				//--- RIGHT CHECK ---
 				//1. See if moving funnel inwards - RIGHT
+
 				Vector2 newRightLeg = portal.Line.p1 - apexPos;
 
-				float rightInwards = rightLeg.Cross(newRightLeg);
-				if (rightInwards >= 0)
+
+				if (Elite::Cross(rightLeg, newRightLeg) >= 0)
 				{
 
 					//2. See if new line degenerates a line segment - RIGHT
-					float legsCrossed = newRightLeg.Cross(leftLeg);
-					if (legsCrossed >= 0)
+
+					if (Elite::Cross(newRightLeg, leftLeg) >= 0)
 					{
 						rightLeg = newRightLeg;
-						rightLegIdx++;
+						rightLegIdx = portalIdx;
 					}
 					else
 					{
@@ -116,24 +117,18 @@ namespace Elite
 					}
 				}
 
-
-
-
 				//--- LEFT CHECK ---
 				//1. See if moving funnel inwards - LEFT
-
 				Vector2 newLeftLeg = portal.Line.p2 - apexPos;
 
-				float leftInwards = leftLeg.Cross(newLeftLeg);
-				if (leftInwards <= 0)
+				if (Elite::Cross(leftLeg, newLeftLeg) <= 0)
 				{
 
 					//2. //2. See if new line degenerates a line segment - LEFT
-					float legsCrossed = newLeftLeg.Cross(rightLeg);
-					if (legsCrossed <= 0)
+					if (Elite::Cross(newLeftLeg, rightLeg) <= 0)
 					{
 						leftLeg = newLeftLeg;
-						leftLegIdx++;
+						leftLegIdx = portalIdx;
 					}
 					else
 					{
@@ -152,6 +147,8 @@ namespace Elite
 						}
 					}
 				}
+
+
 
 
 			}

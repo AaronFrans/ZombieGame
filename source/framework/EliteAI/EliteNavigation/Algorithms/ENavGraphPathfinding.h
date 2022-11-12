@@ -16,6 +16,7 @@ namespace Elite
 		{
 			//Create the path to return
 			std::vector<Vector2> finalPath{};
+			debugNodePositions = finalPath;
 
 			//Get the start and endTriangle
 			auto start{ pNavGraph->GetNavMeshPolygon()->GetTriangleFromPosition(startPos) };
@@ -64,12 +65,17 @@ namespace Elite
 			auto nodes = pathfinder.FindPath(startNode, endNode);
 
 			//OPTIONAL BUT ADVICED: Debug Visualisation
+
+			for (auto& node : nodes)
+				debugNodePositions.push_back(node->GetPosition());
 #ifdef USE_PORTALS
 			//Run optimiser on new graph, MAKE SURE the A star path is working properly before starting this section and uncommenting this!!!
 			debugPortals = SSFA::FindPortals(nodes, pNavGraph->GetNavMeshPolygon());
 
-			debugNodePositions = SSFA::OptimizePortals(debugPortals);
-			finalPath = debugNodePositions;
+			
+
+			finalPath = SSFA::OptimizePortals(debugPortals);
+			//debugNodePositions = finalPath;
 #else
 
 			for (auto& node : nodes)

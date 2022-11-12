@@ -56,7 +56,7 @@ void Elite::NavGraph::CreateNavigationGraph()
 	for (auto& line : m_pNavMeshPolygon->GetLines())
 	{
 		auto triangles{ m_pNavMeshPolygon->GetTrianglesFromLineIndex(line->index) };
-		if (triangles.size())
+		if (triangles.size() > 1)
 		{
 			Vector2 center{ (line->p1.x + line->p2.x) * 0.5f, (line->p1.y + line->p2.y) * 0.5f };
 			NavGraphNode* node{ new NavGraphNode(GetNextFreeNodeIndex(), line->index, center)};

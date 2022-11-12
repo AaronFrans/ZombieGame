@@ -59,6 +59,7 @@ namespace Elite
 		currentRecord.pNode = pStartNode;
 		currentRecord.pConnection = nullptr;
 		currentRecord.estimatedTotalCost = GetHeuristicCost(pStartNode, pGoalNode);
+		currentRecord.costSoFar = 0;
 		openList.push_back(currentRecord);
 
 		while (!openList.empty())
@@ -72,7 +73,8 @@ namespace Elite
 			{
 
 				auto connectionToNode = m_pGraph->GetNode(connection->GetTo());
-				float gCost = currentRecord.costSoFar + connection->GetCost() + GetHeuristicCost(connectionToNode, pGoalNode);
+				//float gCost = currentRecord.costSoFar + connection->GetCost() + GetHeuristicCost(connectionToNode, pGoalNode);
+				float gCost = currentRecord.costSoFar + connection->GetCost();
 
 				bool recordExists = false;
 
@@ -81,7 +83,7 @@ namespace Elite
 					if (record.pNode != connectionToNode)
 						continue;
 
-					if (record.estimatedTotalCost < gCost)
+					if (record.costSoFar < gCost)
 						continue;
 
 					closedList.erase(std::remove(closedList.begin(), closedList.end(), record));
@@ -90,14 +92,14 @@ namespace Elite
 
 				}
 
-				if (!recordExists && closedList.size() != 0)
+				if (!recordExists)
 				{
 					for (auto& record : openList)
 					{
 						if (record.pNode != connectionToNode)
 							continue;
 
-						if (record.estimatedTotalCost < gCost)
+						if (record.costSoFar < gCost)
 							continue;
 
 
@@ -112,8 +114,8 @@ namespace Elite
 				NodeRecord newRecord;
 				newRecord.pConnection = connection;
 				newRecord.pNode = connectionToNode;
-				newRecord.estimatedTotalCost = gCost;
-				newRecord.costSoFar = currentRecord.estimatedTotalCost;
+				newRecord.costSoFar = gCost;
+				newRecord.estimatedTotalCost = gCost + GetHeuristicCost(connectionToNode, pGoalNode);
 
 				openList.push_back(newRecord);
 
@@ -135,6 +137,7 @@ namespace Elite
 					break;
 				}
 			}
+			int i{};
 		}
 
 		path.push_back(currentRecord.pNode);
