@@ -2,7 +2,7 @@
 // Copyright 2021-2022 Elite Engine
 // Authors: Matthieu Delaere, Thomas Goussaert
 /*=============================================================================
-stdafx.h: Precompiled header for engine. Includes all standard files, as well as 
+stdafx.h: Precompiled header for engine. Includes all standard files, as well as
 		  defining and including all platform specific files.
 =============================================================================*/
 
@@ -49,9 +49,9 @@ struct Elite_Exception
 
 //=== Assert ===
 #ifndef _DEBUG
-	#define ELITE_ASSERT(condition, message) ((void)0);
+#define ELITE_ASSERT(condition, message) ((void)0);
 #else
-	#define ELITE_ASSERT(condition, message){ \
+#define ELITE_ASSERT(condition, message){ \
 		std::wstringstream wss; \
 		wss << message; \
 		std::wstring msg = wss.str(); \
@@ -138,7 +138,7 @@ extern bool gRequestShutdown;
 #pragma region GeneralIncludes
 #if defined(_DEBUG) && defined(USE_VLD)
 //#if defined(USE_VLD)
-	#include <vld.h>
+#include <vld.h>
 #endif
 
 #ifdef USE_BOX2D
@@ -177,6 +177,7 @@ extern bool gRequestShutdown;
 #include "framework/EliteTimer/ETimer.h"
 #include "framework/EliteRendering/ERendering.h"
 #include "framework/EliteUI/EImmediateUI.h"
+#include "framework/EliteAI/EliteDecisionMaking/EDecisionMaking.h"
 #pragma endregion //FrameworkIncludes
 
 /* --- FRAMEWORK MACROS ---- */
