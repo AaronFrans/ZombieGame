@@ -5,7 +5,7 @@ BaseAgent::BaseAgent(float radius) : m_Radius(radius)
 {
 	//Create Rigidbody
 	const Elite::RigidBodyDefine define = Elite::RigidBodyDefine(0.01f, 0.1f, Elite::eDynamic, false);
-	const Transform transform = Transform(Elite::ZeroVector2, {0,90});
+	const Transform transform = Transform(Elite::ZeroVector2, { 0,90 });
 	m_pRigidBody = new RigidBody(define, transform);
 
 	//Add shape
@@ -29,15 +29,15 @@ void BaseAgent::Render(float dt)
 	auto o = GetRotation();
 	auto p = GetPosition();
 	auto r = Elite::ToRadians(150.f);
-	
+
 	EliteDebugRenderer2D::GetInstance()->DrawSolidCircle(GetPosition(), m_Radius, { 0,0 }, m_BodyColor);
 	//DEBUGRENDERER2D->DrawSolidCircle(GetPosition(), m_Radius, { 0,0 }, m_BodyColor);
-	
+
 	std::vector<Elite::Vector2> points;
-	points.push_back(Elite::Vector2(static_cast<float>(cos(o)), static_cast<float>(sin(o)) * m_Radius) + p);
-	points.push_back(Elite::Vector2(static_cast<float>(cos(o + r)), static_cast<float>(sin(o + r)) * m_Radius) + p);
-	points.push_back(Elite::Vector2(static_cast<float>(cos(o - r)), static_cast<float>(sin(o - r)) * m_Radius) + p);
-	
+	points.push_back(Elite::Vector2(static_cast<float>(cos(o) * m_Radius), static_cast<float>(sin(o)) * m_Radius) + p);
+	points.push_back(Elite::Vector2(static_cast<float>(cos(o + r) * m_Radius), static_cast<float>(sin(o + r)) * m_Radius) + p);
+	points.push_back(Elite::Vector2(static_cast<float>(cos(o - r) * m_Radius), static_cast<float>(sin(o - r)) * m_Radius) + p);
+
 	DEBUGRENDERER2D->DrawSolidPolygon(&points[0], 3, { 0,0,0,1 }, DEBUGRENDERER2D->NextDepthSlice());
 }
 void BaseAgent::TrimToWorld(float worldBounds, bool isWorldLooping) const {

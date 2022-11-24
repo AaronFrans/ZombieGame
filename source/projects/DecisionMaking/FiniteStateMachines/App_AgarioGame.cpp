@@ -66,12 +66,12 @@ void App_AgarioGame::Start()
 	{
 		Elite::Vector2 randomPos = randomVector2(0, m_TrimWorldSize * (2.0f / 3));
 		AgarioAgent* newAgent = new AgarioAgent(randomPos);
-		//
-		//Blackboard* pBlackboard = CreateBlackboard(newAgent);
-		//
-		//FiniteStateMachine* pStateMachine{ new FiniteStateMachine{pWanderState, pBlackboard} };
-		//
-		//newAgent->SetDecisionMaking(pStateMachine);
+		 
+		 Blackboard* pBlackboard = CreateBlackboard(newAgent);
+		 
+		 FiniteStateMachine* pStateMachine{ new FiniteStateMachine{pWanderState, pBlackboard} };
+		 
+		 newAgent->SetDecisionMaking(pStateMachine);
 
 		m_pAgentVec.push_back(newAgent);
 	}

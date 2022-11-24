@@ -128,8 +128,8 @@ public:
 protected:
 
 	float m_OffsetDistance = 6.f;
-	float m_Radius = 4.f;
-	float m_MaxAngleChange = Elite::ToRadians(45);
+	float m_Radius = 15.f;
+	float m_MaxAngleChange = Elite::ToRadians(90);
 	float m_WanderAngle = 0.f;
 };
 

@@ -16,7 +16,9 @@
 
 //#define ActiveApp_NavMeshGraph
 
-#define ActiveApp_AgarioGame
+//#define ActiveApp_AgarioGame
+
+#define ActiveApp_AgarioGameBT
 
 
 //---------- Registered Applications -----------
@@ -59,10 +61,14 @@ typedef App_NavMeshGraph CurrentApp;
 #include "projects/DecisionMaking/FiniteStateMachines/App_AgarioGame.h"
 typedef App_AgarioGame CurrentApp;
 #endif
+#ifdef ActiveApp_AgarioGameBT
+#include "projects/DecisionMaking/BehaviorTrees/App_AgarioGame_BT.h"
+typedef App_AgarioGame_BT CurrentApp;
+#endif
 
 
 class App_Selector {
-public: 
+public:
 	static IApp* CreateApp() {
 		IApp* myApp = new CurrentApp();
 		return myApp;

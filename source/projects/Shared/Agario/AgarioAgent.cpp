@@ -14,9 +14,12 @@ AgarioAgent::AgarioAgent(Elite::Vector2 pos, Color color)
 	m_pRigidBody->SetUserData({ int(AgarioObjectTypes::Player), this });
 
 	//Create the possible steering behaviors for the agent
+
 	m_pWander = new Wander();
 	m_pSeek = new Seek();
 	m_pFlee = new Flee();
+
+	this->SetAutoOrient(true);
 }
 
 AgarioAgent::AgarioAgent(Elite::Vector2 pos)
@@ -40,7 +43,7 @@ void AgarioAgent::Update(float dt)
 		m_ToUpgrade = 0.0f;
 	}
 
-	if(m_DecisionMaking)
+	if (m_DecisionMaking)
 		m_DecisionMaking->Update(dt);
 
 	SteeringAgent::Update(dt);
@@ -92,7 +95,7 @@ void AgarioAgent::OnUpgrade(float amountOfFood)
 {
 	float prevMass = GetMass();
 	m_Radius += amountOfFood;
-	
+
 	//Remove existing shapes
 	m_pRigidBody->RemoveAllShapes();
 

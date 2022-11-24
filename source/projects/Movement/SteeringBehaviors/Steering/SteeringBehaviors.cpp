@@ -177,7 +177,7 @@ SteeringOutput Wander::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	Elite::Vector2 wanderPoint = pAgent->GetDirection();
 
 	wanderPoint.Normalize();
-	wanderPoint *= m_OffsetDistance;
+	wanderPoint *= m_OffsetDistance * 0;
 
 	wanderPoint += pAgent->GetPosition();
 
@@ -186,7 +186,7 @@ SteeringOutput Wander::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	m_MaxAngleChange = Elite::ToRadians(90);
 
 	m_WanderAngle = pAgent->GetRotation() + Elite::randomFloat(-m_MaxAngleChange, m_MaxAngleChange);
-
+	m_Radius = pAgent->GetRadius() + 5;
 	wanderPointOffset.x += m_Radius * cos(m_WanderAngle);
 	wanderPointOffset.y += m_Radius * sin(m_WanderAngle);
 
