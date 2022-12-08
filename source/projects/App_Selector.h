@@ -18,7 +18,9 @@
 
 //#define ActiveApp_AgarioGame
 
-#define ActiveApp_AgarioGameBT
+//#define ActiveApp_AgarioGameBT
+
+#define ActiveApp_InfluenceMaps
 
 
 //---------- Registered Applications -----------
@@ -61,9 +63,15 @@ typedef App_NavMeshGraph CurrentApp;
 #include "projects/DecisionMaking/FiniteStateMachines/App_AgarioGame.h"
 typedef App_AgarioGame CurrentApp;
 #endif
+
 #ifdef ActiveApp_AgarioGameBT
 #include "projects/DecisionMaking/BehaviorTrees/App_AgarioGame_BT.h"
 typedef App_AgarioGame_BT CurrentApp;
+#endif
+
+#ifdef ActiveApp_InfluenceMaps
+#include "projects/DecisionMaking/InfluenceMaps/App_InfluenceMap.h"
+typedef App_InfluenceMap CurrentApp;
 #endif
 
 
