@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Plugin.h"
 #include "IExamInterface.h"
+#include "Ai\BT\Behaviors.h"
+
 
 using namespace std;
 
@@ -14,9 +16,22 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 	//Bit information about the plugin
 	//Please fill this in!!
 	info.BotName = "MinionExam";
-	info.Student_FirstName = "Foo";
-	info.Student_LastName = "Bar";
+	info.Student_FirstName = "Aaron";
+	info.Student_LastName = "Frans";
 	info.Student_Class = "2DAEx";
+
+
+	m_pSteeringAgent = std::make_unique<SteeringAgent>();
+	m_pSteeringAgent->SetToSeek();
+
+
+	m_pBB = new Elite::Blackboard{};
+
+
+	m_pBT = new Elite::BehaviorTree{ m_pBB,
+				new Elite::BehaviorAction(BT_Actions::ChangeToWander)
+	};
+
 }
 
 //Called only once
@@ -121,7 +136,7 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	auto steering = SteeringPlugin_Output();
 	
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
-	auto agentInfo = m_pInterface->Agent_GetInfo();
+	m_pSteeringAgent->UpdateAgentInfo(m_pInterface->Agent_GetInfo());
 
 
 	//Use the navmesh to calculate the next navmesh point
@@ -174,19 +189,27 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	}
 
 	//Simple Seek Behaviour (towards Target)
-	steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
-	steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
-	steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
 
-	if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
-	{
-		steering.LinearVelocity = Elite::ZeroVector2;
-	}
 
-	//steering.AngularVelocity = m_AngSpeed; //Rotate your character to inspect the world while walking
-	steering.AutoOrient = true; //Setting AutoOrient to TRue overrides the AngularVelocity
+	m_pSteeringAgent->SetTarget(nextTargetPos);
+	steering = m_pSteeringAgent->DoSteering(dt);
 
-	steering.RunMode = m_CanRun; //If RunMode is True > MaxLinSpd is increased for a limited time (till your stamina runs out)
+
+	//steering.LinearVelocity = nextTargetPos - agentInfo.Position; //Desired Velocity
+	//steering.LinearVelocity.Normalize(); //Normalize Desired Velocity
+	//steering.LinearVelocity *= agentInfo.MaxLinearSpeed; //Rescale to Max Speed
+	//
+	//
+	//
+	//if (Distance(nextTargetPos, agentInfo.Position) < 2.f)
+	//{
+	//	steering.LinearVelocity = Elite::ZeroVector2;
+	//}
+	//
+	////steering.AngularVelocity = m_AngSpeed; //Rotate your character to inspect the world while walking
+	//steering.AutoOrient = true; //Setting AutoOrient to TRue overrides the AngularVelocity
+	//
+	//steering.RunMode = m_CanRun; //If RunMode is True > MaxLinSpd is increased for a limited time (till your stamina runs out)
 
 	//SteeringPlugin_Output is works the exact same way a SteeringBehaviour output
 

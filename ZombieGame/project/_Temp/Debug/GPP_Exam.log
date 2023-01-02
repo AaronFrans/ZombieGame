@@ -1,4 +1,4 @@
-﻿  stdafx.cpp
+﻿  SteeringAgent.cpp
   Plugin.cpp
-     Creating library D:\GPP\GPP\ZombieGame\project\..\_DEMO_DEBUG\GPP_Plugin_d.lib and object D:\GPP\GPP\ZombieGame\project\..\_DEMO_DEBUG\GPP_Plugin_d.exp
-  GPP_Exam.vcxproj -> D:\GPP\GPP\ZombieGame\_DEMO_DEBUG\GPP_Plugin_d.dll
+  Generating Code...
+  GPP_Exam.vcxproj -> D:\Gpp\GameplayProgramming\ZombieGame\_DEMO_DEBUG\GPP_Plugin_d.dll

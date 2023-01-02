@@ -1,9 +1,13 @@
 #pragma once
 #include "IExamPlugin.h"
 #include "Exam_HelperStructs.h"
+#include "Ai\BT\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.h"
+#include <Ai\Movement\SteeringAgent.h>
 
 class IBaseInterface;
 class IExamInterface;
+
+
 
 class Plugin :public IExamPlugin
 {
@@ -35,6 +39,16 @@ private:
 	float m_AngSpeed = 0.f; //Demo purpose
 
 	UINT m_InventorySlot = 0;
+
+
+	//BT
+	Elite::Blackboard* m_pBB;
+	Elite::BehaviorTree* m_pBT;
+
+	//Movement
+	std::unique_ptr<SteeringAgent> m_pSteeringAgent;
+
+
 };
 
 //ENTRY
