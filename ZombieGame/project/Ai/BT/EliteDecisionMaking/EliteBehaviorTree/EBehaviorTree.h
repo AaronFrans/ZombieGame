@@ -157,5 +157,18 @@ namespace Elite
 		Blackboard* m_pBlackBoard = nullptr;
 		IBehavior* m_pRootBehavior = nullptr;
 	};
+
+	//-----------------------------------------------------------------
+	// INVERT CONDITIONAL (IBehavior)
+	//-----------------------------------------------------------------
+	class BehaviorInvertConditional : public IBehavior
+	{
+	public:
+		explicit BehaviorInvertConditional(std::function<bool(Blackboard*)> fp) : m_fpConditional(fp) {}
+		virtual BehaviorState Execute(Blackboard* pBlackBoard) override;
+
+	private:
+		std::function<bool(Blackboard*)> m_fpConditional = nullptr;
+	};
 }
 #endif
