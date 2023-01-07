@@ -1,10 +1,1 @@
-﻿  stdafx.cpp
-  EBehaviorTree.cpp
-D:\Gpp\ZombieGame\project\Ai\BT\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.cpp(120,2): warning C4809: switch statement has redundant 'default' label; all possible 'case' labels are given
-  SteeringAgent.cpp
-  SteeringBehavior.cpp
-  Plugin.cpp
-  Generating Code...
-D:\Gpp\ZombieGame\project\Ai\BT\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.cpp(152): warning C4715: 'Elite::BehaviorInvertConditional::Execute': not all control paths return a value
-     Creating library D:\Gpp\ZombieGame\project\..\_DEMO_DEBUG\GPP_Plugin_d.lib and object D:\Gpp\ZombieGame\project\..\_DEMO_DEBUG\GPP_Plugin_d.exp
-  GPP_Exam.vcxproj -> D:\Gpp\ZombieGame\_DEMO_DEBUG\GPP_Plugin_d.dll
+﻿  GPP_Exam.vcxproj -> D:\Gpp\GameplayProgramming\ZombieGame\_DEMO_DEBUG\GPP_Plugin_d.dll

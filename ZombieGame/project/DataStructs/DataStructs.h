@@ -1,9 +1,11 @@
+#ifndef DATASTRUCTS
+#define DATASTRUCTS
 #include "IExamPlugin.h"
 #include "Exam_HelperStructs.h"
 
 
 
-struct Rect
+struct Rect final
 {
 	Rect(float left, float bottom, float width, float height)
 	{
@@ -12,11 +14,12 @@ struct Rect
 		Width = width;
 		Height = height;
 	}
+
 	Rect() = default;
 
-	float Bottom, Left, Width, Height;
+	float Bottom{}, Left{}, Width{}, Height{};
 
-	bool visited{ false };
+	bool IsVisited{ false };
 
 
 	bool IsInBounds(Elite::Vector2 point)
@@ -26,7 +29,7 @@ struct Rect
 };
 
 
-struct HouseInfoExtended : HouseInfo
+struct HouseInfoExtended final : HouseInfo
 {
 	Rect Bounds;
 
@@ -42,7 +45,6 @@ struct HouseInfoExtended : HouseInfo
 
 
 		Bounds = Rect{ Center.x - Size.x * 0.5f + 2, Center.y - Size.y * 0.5f + 2, Size.x - 4, Size.y - 4 };
-
 
 
 		//Split house into rectangles
@@ -68,3 +70,71 @@ struct HouseInfoExtended : HouseInfo
 
 
 };
+
+struct ItemInfoExtended final: ItemInfo{
+
+	void LoadItemInfo(ItemInfo info)
+	{
+		Location = info.Location;
+		Type = info.Type;
+		ItemHash = info.ItemHash;
+
+		IsInit = true;
+	}
+
+
+	ItemInfo AsItemInfo()
+	{
+		ItemInfo toReturn{};
+
+		toReturn.Location = Location;
+		toReturn.Type = Type;
+		toReturn.ItemHash = ItemHash;
+
+		return toReturn;
+	}
+	bool IsInit{ false };
+};
+
+struct WorldInfoExtended final : WorldInfo 
+{
+	Rect Bounds;
+
+	int CurrentCellIndex{};
+	std::vector<Rect> WorldGrid{};
+
+	void LoadWorldInfo(WorldInfo info)
+	{
+		IsInit = true;
+		Center = info.Center;
+		Dimensions = info.Dimensions;
+
+		Bounds = Rect{ Center.x - Dimensions.x * 0.5f, Center.y - Dimensions.y * 0.5f, Dimensions.x - 4, Dimensions.y - 4 };
+
+		int nrOfCells{ 75 };
+		float gridCellWidth{ Bounds.Width / nrOfCells };
+		float gridCellHeight{ Bounds.Height / nrOfCells };
+		for (int i = 0; i <= nrOfCells; ++i)
+		{
+			for (int j = 0; j <= nrOfCells; ++j)
+			{
+				Rect cell{
+					Bounds.Left + gridCellWidth * i,
+					Bounds.Bottom + gridCellHeight * j,
+					gridCellWidth,
+					gridCellHeight
+				};
+				WorldGrid.push_back(cell);
+			}
+		}
+
+	}
+
+
+
+	bool IsInit{ false };
+};
+
+#endif // !DATASTRUCTS
+
+

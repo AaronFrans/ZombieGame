@@ -43,11 +43,11 @@ public:
 ///////////////////////////////////////
 //Wander
 //****
-class Wander : public ISteeringBehavior
+class ExploreWorld : public ISteeringBehavior
 {
 public:
-	Wander() = default;
-	virtual ~Wander() = default;
+	ExploreWorld() = default;
+	virtual ~ExploreWorld() = default;
 
 	//Wander Behaviour
 	SteeringPlugin_Output CalculateSteering(float deltaT, AgentInfo pAgent) override;

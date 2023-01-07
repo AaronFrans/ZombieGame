@@ -1,5 +1,4 @@
 #include "stdafx.h"
-
 #include "SteeringBehavior.h"
 
 
@@ -18,7 +17,7 @@ SteeringPlugin_Output Seek::CalculateSteering(float deltaT, AgentInfo agentInfo)
 	return steering;
 }
 
-SteeringPlugin_Output Wander::CalculateSteering(float deltaT, AgentInfo agentInfo)
+SteeringPlugin_Output ExploreWorld::CalculateSteering(float deltaT, AgentInfo agentInfo)
 {
 
 	SteeringPlugin_Output steering = {};

@@ -73,7 +73,7 @@ namespace BT_Actions
 		return Elite::BehaviorState::Success;
 	}
 
-	Elite::BehaviorState PatrolHouse(Elite::Blackboard* pBlackboard)
+	Elite::BehaviorState ExploreHouse(Elite::Blackboard* pBlackboard)
 	{
 		std::cout << "Looting\n";
 		HouseInfoExtended house;
@@ -95,11 +95,11 @@ namespace BT_Actions
 
 		if (house.HouseGrid[house.CurrentCellIndex].IsInBounds(playerInfo.Position))
 		{
+			house.HouseGrid[house.CurrentCellIndex].IsVisited = true;
 			++house.CurrentCellIndex;
-			if (house.CurrentCellIndex >= house.HouseGrid.size())
+			if (house.CurrentCellIndex >= static_cast<int>(house.HouseGrid.size()))
 				return Elite::BehaviorState::Failure;
 
-			house.HouseGrid[house.CurrentCellIndex].visited = true;
 		}
 
 		Rect currentCell = house.HouseGrid[house.CurrentCellIndex];
@@ -113,6 +113,70 @@ namespace BT_Actions
 
 		return Elite::BehaviorState::Success;
 	}
+
+	Elite::BehaviorState PickUpItem(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Change to seek\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		ItemInfoExtended nextTarget;
+		if (!pBlackboard->GetData("ItemTarget", nextTarget))
+			return Elite::BehaviorState::Failure;
+
+		AgentInfo& playerInfo{ pPlayer->GetInfo() };
+
+		if (Elite::Square(playerInfo.GrabRange) > nextTarget.Location.DistanceSquared(playerInfo.Position))
+		{
+			pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint(nextTarget.Location));
+
+			pPlayer->SetToSeek();
+
+			return Elite::BehaviorState::Success;
+		}
+		else
+		{
+			switch (nextTarget.Type)
+			{
+			case eItemType::SHOTGUN:
+			{
+				pInterface->Inventory_AddItem(0, nextTarget.AsItemInfo());
+			}
+			case eItemType::PISTOL:
+			{
+				pInterface->Inventory_AddItem(1, nextTarget.AsItemInfo());
+			}
+			case eItemType::FOOD:
+			{
+				if (!pInterface->Inventory_GetItem(2, ItemInfo{}))
+					pInterface->Inventory_AddItem(2, nextTarget.AsItemInfo());
+				else
+					pInterface->Inventory_AddItem(3, nextTarget.AsItemInfo());
+			}
+			case eItemType::MEDKIT:
+			{
+				pInterface->Inventory_AddItem(4, nextTarget.AsItemInfo());
+			}
+			case eItemType::GARBAGE:
+			{
+				//pInterface->Item_Destroy(nextTarget.AsItemInfo());
+			}
+			default:
+				return Elite::BehaviorState::Failure;
+				break;
+			}
+
+			pBlackboard->ChangeData("ItemTarget", ItemInfoExtended{});
+			return  Elite::BehaviorState::Success;
+
+
+		}
+	}
 }
 
 //-----------------------------------------------------------------
@@ -124,7 +188,7 @@ namespace BT_Conditions
 {
 	bool HasSeenHouse(Elite::Blackboard* pBlackboard)
 	{
-		//std::cout << "see house\n";
+		std::cout << "see house\n";
 
 		HouseInfoExtended target;
 		if (pBlackboard->GetData("TargetHouse", target) && target.IsInit)
@@ -180,7 +244,7 @@ namespace BT_Conditions
 	{
 		std::cout << "have i been here before?\n";
 
-		std::vector<HouseInfoExtended>* pVisited;		
+		std::vector<HouseInfoExtended>* pVisited;
 
 		if (!pBlackboard->GetData("VisitedHouses", pVisited) || !pVisited)
 			return false;
@@ -245,15 +309,99 @@ namespace BT_Conditions
 		return true;
 	}
 
+	bool HasSeenItem(Elite::Blackboard* pBlackboard)
+	{
 
+		//ItemInfoExtended target{};
+		//if (pBlackboard->GetData("Player", target) && target.IsInit)
+		//	return true;
+
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return false;
+
+		std::vector<ItemInfoExtended>* pItemsInFov;
+
+		if (!pBlackboard->GetData("ItemsInFov", pItemsInFov) || !pItemsInFov)
+			return false;
+
+		if (pItemsInFov->empty())
+			return false;
+
+		ItemInfoExtended closest{};
+
+		AgentInfo& playerInfo{ pPlayer->GetInfo() };
+
+		float closestDistSqrt{ FLT_MAX };
+
+		for (auto& item : *pItemsInFov)
+		{
+			float distSqrt = item.Location.DistanceSquared(playerInfo.Position);
+			if (distSqrt < closestDistSqrt)
+			{
+				closestDistSqrt = distSqrt;
+				closest = item;
+			}
+		}
+
+		if (!closest.IsInit)
+			return false;
+
+		pBlackboard->ChangeData("ItemTarget", closest);
+
+		return true;
+	}
+
+	bool IsItemValuable(Elite::Blackboard* pBlackboard)
+	{
+
+		ItemInfoExtended target{};
+		if (!pBlackboard->GetData("ItemTarget", target) || !target.IsInit)
+			return false;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return false;
+
+		std::vector<eItemType> bestInvent{};
+		if (!pBlackboard->GetData("BestInventory", bestInvent) || bestInvent.empty())
+			return false;
+
+
+
+		switch (target.Type)
+		{
+		case eItemType::SHOTGUN:
+		{
+			ItemInfo currentInventoryItem{};
+			if (!pInterface->Inventory_GetItem(0, currentInventoryItem)) return true;
+			return pInterface->Weapon_GetAmmo(currentInventoryItem) <= 0;
+		}
+		case eItemType::PISTOL:
+		{
+			ItemInfo currentInventoryItem{};
+			if (!pInterface->Inventory_GetItem(1, currentInventoryItem)) return true;
+			return pInterface->Weapon_GetAmmo(currentInventoryItem) <= 0;
+		}
+		case eItemType::FOOD:
+		{
+			ItemInfo currentInventoryItem{};
+			if (!pInterface->Inventory_GetItem(2, currentInventoryItem)) return true;
+			return !pInterface->Inventory_GetItem(3, currentInventoryItem);
+		}
+		case eItemType::MEDKIT:
+		{
+			ItemInfo currentInventoryItem{};
+			return !pInterface->Inventory_GetItem(4, currentInventoryItem);
+		}
+		case eItemType::GARBAGE:
+		{
+			return false;
+		}
+		default:
+			return false;
+		}
+	}
 }
-
-
-
-
-
-
-
-
 
 #endif

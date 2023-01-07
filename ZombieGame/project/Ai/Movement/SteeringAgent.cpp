@@ -4,10 +4,12 @@
 
 
 
-SteeringAgent::SteeringAgent()
+
+SteeringAgent::SteeringAgent(WorldInfoExtended worldInfo)
+	:m_WorldInfo{worldInfo}
 {
 	m_pSeek = std::make_shared<Seek>();
-	m_pWander = std::make_shared<Wander>();
+	m_pWander = std::make_shared<ExploreWorld>();
 }
 
 void SteeringAgent::UpdateAgentInfo(const AgentInfo& newInfo)
