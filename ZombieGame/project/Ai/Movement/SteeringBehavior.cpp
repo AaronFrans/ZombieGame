@@ -6,14 +6,32 @@ SteeringPlugin_Output Seek::CalculateSteering(float deltaT, AgentInfo agentInfo)
 {
 	SteeringPlugin_Output steering = {};
 
-	steering.LinearVelocity = m_Target - agentInfo.Position;
+	Elite::Vector2 toTarget = m_Target - agentInfo.Position;
 
-	steering.AngularVelocity = 10.f;
+	steering.LinearVelocity = toTarget;
 
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= agentInfo.MaxLinearSpeed;
 
 
+
+	//const Elite::Vector2 curDirection{ Elite::OrientationToVector(agentInfo.Orientation) };
+	//
+	//const float dot{ curDirection.Dot(toTarget.GetNormalized()) };
+	//
+	//if (dot < 1.0f)
+	//{
+	//	const float crossed{ curDirection.Cross(toTarget) };
+	//
+	//	steering.AngularVelocity = agentInfo.MaxAngularSpeed;
+	//
+	//	if (crossed < 0)
+	//	{
+	//		steering.AngularVelocity *= -1.0f;
+	//	}
+	//	const float velocityOffset{ 0.05f };
+	//	steering.AngularVelocity *= 1.0f - dot / (1.0f) + 0.05f;
+	//}
 	return steering;
 }
 
@@ -43,6 +61,54 @@ SteeringPlugin_Output ExploreWorld::CalculateSteering(float deltaT, AgentInfo ag
 	steering.LinearVelocity.Normalize();
 	steering.LinearVelocity *= agentInfo.MaxLinearSpeed;
 
+
+	return steering;
+}
+
+SteeringPlugin_Output Flee::CalculateSteering(float deltaT, AgentInfo agentInfo)
+{
+	SteeringPlugin_Output steering = {};
+
+	steering.AutoOrient = false;
+
+	Elite::Vector2 toTarget = agentInfo.Position -  m_Target;
+
+	steering.LinearVelocity = toTarget;
+
+	steering.LinearVelocity.Normalize();
+	steering.LinearVelocity *= agentInfo.MaxLinearSpeed;
+
+
+
+	const Elite::Vector2 curDirection{ Elite::OrientationToVector(agentInfo.Orientation) };
+
+	const float dot{ curDirection.Dot(toTarget.GetNormalized()) };
+
+	if (dot < 1.0f)
+	{
+		const float crossed{ curDirection.Cross(toTarget) };
+
+		steering.AngularVelocity = -agentInfo.MaxAngularSpeed;
+
+		if (crossed < 0)
+		{
+			steering.AngularVelocity *= -1.0f;
+		}
+		const float velocityOffset{ 0.05f };
+		steering.AngularVelocity *= 1.0f - dot / + 0.05f;
+	}
+
+	steering.RunMode = true;
+	return steering;
+}
+
+SteeringPlugin_Output Turn::CalculateSteering(float deltaT, AgentInfo agentInfo)
+{
+	SteeringPlugin_Output steering = {};
+
+	steering.AutoOrient = false;
+
+	steering.AngularVelocity = agentInfo.MaxAngularSpeed;
 
 	return steering;
 }

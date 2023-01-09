@@ -42,6 +42,7 @@ void App_GraphTheory::Update(float deltaTime)
 	Eulerianity eulerianity = eulerFinder.IsEulerian();
 
 
+
 	if (eulerianity == Eulerianity::notEulerian)
 	{
 		cout << "Not Euler\n";
@@ -52,16 +53,19 @@ void App_GraphTheory::Update(float deltaTime)
 		for (size_t i = 0; i < path.size(); i++)
 		{
 			cout << path[i]->GetIndex();
-			if (i != path.size()-1)
+			if (i != path.size() - 1)
 			{
 				cout << ", ";
 			}
-			
+
 		}
-			
+
 		cout << "\n";
 
 	}
+
+
+	ColorGraph();
 
 
 	//------- UI --------
@@ -117,4 +121,49 @@ void App_GraphTheory::Update(float deltaTime)
 void App_GraphTheory::Render(float deltaTime) const
 {
 	m_GraphRenderer.RenderGraph(m_pGraph2D, true, true);
+}
+
+
+void App_GraphTheory::ColorGraph()
+{
+	//Using greedy color algo
+	std::vector<GraphNode2D*>& nodes = m_pGraph2D->GetAllNodes();
+
+	nodes[0]->SetColor(m_Colors[0]);
+
+	for (int i = 1; i < nodes.size(); i++)
+	{
+		int currentColor{ 0 };
+
+		while (currentColor < m_Colors.size())
+		{
+			bool used = false;
+
+			for (auto& connection : m_pGraph2D->GetNodeConnections(nodes[i]))
+			{
+				auto toNode = m_pGraph2D->GetNode(connection->GetTo());
+				if (IsSameColor(toNode->GetColor(), m_Colors[currentColor]))
+				{
+					used = true;
+					break;
+				}
+			}
+			if (!used)
+			{
+				nodes[i]->SetColor(m_Colors[currentColor]);
+
+				break;
+			}
+			++currentColor;
+		}
+		if (currentColor == m_Colors.size())
+		{
+			std::cout << "Add more colors to m_Colors\n";
+		}
+	}
+}
+
+bool App_GraphTheory::IsSameColor(const Color& c1, const Color& c2) const
+{
+	return c1.r == c2.r && c1.g == c2.g && c1.b == c2.b && c1.a == c2.a;
 }

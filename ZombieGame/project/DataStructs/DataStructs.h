@@ -69,38 +69,58 @@ struct HouseInfoExtended final : HouseInfo
 	}
 
 
+	int PositionToIndex(const Elite::Vector2 pos) const
+	{
+
+		auto foundIt = std::find_if(begin(HouseGrid), end(HouseGrid), [&](Rect r) {
+			return r.IsInBounds(pos);
+			});
+
+
+		if (foundIt == end(HouseGrid))
+			return -1;
+
+		return foundIt - begin(HouseGrid);
+	}
+
 };
 
-struct ItemInfoExtended final: ItemInfo{
+struct EntityInfoExtended final : EntityInfo {
 
-	void LoadItemInfo(ItemInfo info)
+	void LoadItemInfo(EntityInfo info)
 	{
 		Location = info.Location;
 		Type = info.Type;
-		ItemHash = info.ItemHash;
+		EntityHash = info.EntityHash;
 
 		IsInit = true;
 	}
 
 
-	ItemInfo AsItemInfo()
+	EntityInfo AsEntityInfo()
 	{
-		ItemInfo toReturn{};
+		EntityInfo toReturn{};
 
 		toReturn.Location = Location;
 		toReturn.Type = Type;
-		toReturn.ItemHash = ItemHash;
+		toReturn.EntityHash = EntityHash;
 
 		return toReturn;
 	}
 	bool IsInit{ false };
 };
 
-struct WorldInfoExtended final : WorldInfo 
+struct WorldInfoExtended final : WorldInfo
 {
-	Rect Bounds;
 
-	int CurrentCellIndex{};
+	int NrOfCells{  };
+	float CellWidth{ };
+	float CellHeight{ };
+
+
+	bool IsInit{ false };
+	Rect Bounds;
+	int CurrentCellIndex{0};
 	std::vector<Rect> WorldGrid{};
 
 	void LoadWorldInfo(WorldInfo info)
@@ -111,28 +131,98 @@ struct WorldInfoExtended final : WorldInfo
 
 		Bounds = Rect{ Center.x - Dimensions.x * 0.5f, Center.y - Dimensions.y * 0.5f, Dimensions.x - 4, Dimensions.y - 4 };
 
-		int nrOfCells{ 75 };
-		float gridCellWidth{ Bounds.Width / nrOfCells };
-		float gridCellHeight{ Bounds.Height / nrOfCells };
-		for (int i = 0; i <= nrOfCells; ++i)
+		int nrOfCells{ 11 };
+		CellWidth = Bounds.Width / nrOfCells;
+		CellHeight = Bounds.Height / nrOfCells;
+		std::vector<Rect> tempVector;
+		for (int i = 0; i < nrOfCells; ++i)
 		{
-			for (int j = 0; j <= nrOfCells; ++j)
+			for (int j = 0; j < nrOfCells; ++j)
 			{
 				Rect cell{
-					Bounds.Left + gridCellWidth * i,
-					Bounds.Bottom + gridCellHeight * j,
-					gridCellWidth,
-					gridCellHeight
+					Bounds.Left + CellWidth * j,
+					Bounds.Bottom + CellHeight * i,
+					CellWidth,
+					CellHeight
 				};
-				WorldGrid.push_back(cell);
+				tempVector.push_back(cell);
 			}
 		}
+
+		
+		int top = nrOfCells - 1, bottom = 0, left = 0, right = nrOfCells - 1;
+
+		while (top >= bottom && left <= right)
+		{
+			// Add the top row to the vector
+			for (int i = left; i <= right; ++i)
+			{
+				WorldGrid.push_back(tempVector[top * nrOfCells + i]);
+			}
+
+			top--;
+
+			// Break if no more elements
+			if (top < bottom || left > right)
+				break;
+
+			// Print the rightmost column
+			for (int i = top; i >= bottom; i--)
+			{
+				WorldGrid.push_back(tempVector[i * nrOfCells + right]);
+			}
+			
+			right--;
+
+			// Break if no more elements
+			if (top < bottom || left > right)
+				break;
+
+			// Print the bottom row
+			for (int i = right; i >= left; i--)
+			{
+				WorldGrid.push_back(tempVector[bottom * nrOfCells + i]);
+			}
+
+			bottom++;
+
+			// Break if no more elements
+			if (top < bottom || left > right)
+				break;
+
+
+
+			// Print the leftmost column	
+			for (int i = bottom; i <= top; ++i)
+			{
+				WorldGrid.push_back(tempVector[i * nrOfCells + left]);
+			}
+
+			left++;
+
+			if (top < bottom || left > right)
+				break;
+		}
+
+		std::reverse(begin(WorldGrid), end(WorldGrid));
+
 
 	}
 
 
+	int PositionToIndex(const Elite::Vector2 pos) const
+	{
 
-	bool IsInit{ false };
+		auto foundIt = std::find_if(begin(WorldGrid), end(WorldGrid), [&](Rect r) {
+			return r.IsInBounds(pos);
+			});
+
+
+		if (foundIt == end(WorldGrid))
+			return -1;
+
+		return foundIt - begin(WorldGrid);
+	}
 };
 
 #endif // !DATASTRUCTS

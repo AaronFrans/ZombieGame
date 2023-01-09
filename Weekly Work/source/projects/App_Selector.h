@@ -10,7 +10,7 @@
 
 //#define ActiveApp_Flocking
 
-//#define ActiveApp_GraphTheory
+#define ActiveApp_GraphTheory
 
 //#define ActiveApp_PathfindingAStar
 
@@ -20,7 +20,7 @@
 
 //#define ActiveApp_AgarioGameBT
 
-#define ActiveApp_InfluenceMaps
+//#define ActiveApp_InfluenceMaps
 
 
 //---------- Registered Applications -----------

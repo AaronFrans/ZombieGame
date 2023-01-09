@@ -17,5 +17,6 @@
     <ClInclude Include="Ai\BT\Behaviors.h" />
     <ClInclude Include="Ai\Movement\SteeringAgent.h" />
     <ClInclude Include="Ai\Movement\SteeringBehavior.h" />
+    <ClInclude Include="Utils\Utils.h" />
   </ItemGroup>
 </Project>

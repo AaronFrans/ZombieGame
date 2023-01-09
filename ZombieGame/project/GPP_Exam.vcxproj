@@ -190,6 +190,7 @@
     <ClInclude Include="DataStructs\DataStructs.h" />
     <ClInclude Include="Plugin.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ai\BT\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.cpp" />

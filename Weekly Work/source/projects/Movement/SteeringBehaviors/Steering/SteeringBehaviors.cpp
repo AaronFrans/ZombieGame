@@ -34,7 +34,6 @@ SteeringOutput Flee::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 {
 	Elite::Vector2 fromTarget = pAgent->GetPosition() - m_Target.Position;
 
-
 	float distance = fromTarget.Magnitude();
 	SteeringOutput steering = {};
 
@@ -107,8 +106,6 @@ SteeringOutput Face::CalculateSteering(float deltaT, SteeringAgent* pAgent)
 	Elite::Vector2 agentDir = Elite::OrientationToVector(pAgent->GetRotation());
 
 	float angle = atan2(agentDir.y, agentDir.x) - atan2(toTarget.y, toTarget.x);
-
-
 
 	steering.AngularVelocity = -(angle * pAgent->GetMaxAngularSpeed());
 

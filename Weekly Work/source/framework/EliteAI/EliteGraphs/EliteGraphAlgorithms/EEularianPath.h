@@ -105,7 +105,12 @@ namespace Elite
 			}
 			break;
 		case Elite::Eulerianity::eulerian:
+
 			nodeIndex = 0;
+			while (m_pGraph->GetNodeConnections(graphCopy->GetNode(nodeIndex)).size()== 0)
+			{
+				++nodeIndex;
+			}
 			break;
 		}
 

@@ -29,8 +29,7 @@ private:
 	//Interface, used to request data from/perform actions with the AI Framework
 	IExamInterface* m_pInterface = nullptr;
 	std::vector<HouseInfoExtended> GetHousesInFOV() const;
-	std::vector<EntityInfo> GetEntitiesInFOV() const;
-	std::vector<ItemInfoExtended> GetItemsInFOV() const;
+	std::vector<EntityInfoExtended> GetEntitiesInFOV() const;
 
 	Elite::Vector2 m_Target = {};
 	bool m_CanRun = false; //Demo purpose
@@ -48,8 +47,7 @@ private:
 	//BT Vars
 	std::unique_ptr < std::vector<HouseInfoExtended>> m_pVisitedHouses;
 	std::unique_ptr < std::vector<HouseInfoExtended>> m_pHousesInFov;
-	std::unique_ptr < std::vector<ItemInfoExtended>> m_pItemsInFov;
-	std::vector<eItemType> m_BestInventory{ eItemType::SHOTGUN, eItemType::PISTOL, eItemType::FOOD, eItemType::FOOD, eItemType::MEDKIT };
+	std::unique_ptr < std::vector<EntityInfoExtended>> m_pEnitiesInFov;
 
 	//Movement
 	std::unique_ptr<SteeringAgent> m_pSteeringAgent;

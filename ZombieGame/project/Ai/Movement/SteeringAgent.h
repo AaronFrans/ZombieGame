@@ -18,12 +18,19 @@ public:
 	void UpdateAgentInfo(const AgentInfo& newInfo);
 	void SetToSeek();
 	void SetToWander();
+	void SetToFlee();
+	void SetToTurn();
 
-	void SetTarget(Elite::Vector2 target) { m_pCurrentSteeringBehavior->SetTarget(target); };
+	void SetTarget(Elite::Vector2 target) { 
+		m_pSeek->SetTarget(target);
+		m_pWander->SetTarget(target);
+		m_pFlee->SetTarget(target);
+		m_pTurn->SetTarget(target);
+	};
 	SteeringPlugin_Output DoSteering(float deltaT) { return m_pCurrentSteeringBehavior->CalculateSteering(deltaT, m_AgentInfo); }
 
 	AgentInfo GetInfo() { return m_AgentInfo; };
-	WorldInfoExtended GetWorldInfo() { return m_WorldInfo; };
+	WorldInfoExtended& GetWorldInfo() { return m_WorldInfo; };
 
 
 
@@ -39,5 +46,6 @@ private:
 	//Steering
 	std::shared_ptr<ISteeringBehavior> m_pSeek;
 	std::shared_ptr<ISteeringBehavior> m_pWander;
+	std::shared_ptr<ISteeringBehavior> m_pFlee;
+	std::shared_ptr<ISteeringBehavior> m_pTurn;
 };
-

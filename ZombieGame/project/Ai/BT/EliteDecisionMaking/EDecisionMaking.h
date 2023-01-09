@@ -27,8 +27,6 @@ namespace Elite
 //Blackboard
 #include "Ai/BT/EliteData/EBlackboard.h"
 
-
-
 #endif
 
 

@@ -12,6 +12,7 @@
 #include "Exam_HelperStructs.h"
 
 #include "Ai/BT/EliteDecisionMaking/EliteBehaviorTree/EBehaviorTree.h"
+#include "Utils\Utils.h"
 
 
 //-----------------------------------------------------------------
@@ -33,9 +34,48 @@ namespace BT_Actions
 		return Elite::BehaviorState::Success;
 	}
 
+	Elite::BehaviorState ChangeExploreWorld(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Exploring\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		const AgentInfo& playerInfo{ pPlayer->GetInfo() };
+		WorldInfoExtended& worldInfo{ pPlayer->GetWorldInfo() };
+
+
+		while (worldInfo.WorldGrid[worldInfo.CurrentCellIndex].IsVisited)
+		{
+			if (worldInfo.CurrentCellIndex == static_cast<int>(worldInfo.WorldGrid.size() - 1))
+				break;
+			worldInfo.CurrentCellIndex++;
+		}
+
+
+		if (worldInfo.WorldGrid[worldInfo.CurrentCellIndex].IsInBounds(playerInfo.Position))
+		{
+			worldInfo.WorldGrid[worldInfo.CurrentCellIndex].IsVisited = true;
+			if (worldInfo.CurrentCellIndex >= static_cast<int>(worldInfo.WorldGrid.size()))
+				return Elite::BehaviorState::Failure;
+		}
+
+		Rect currentCell = worldInfo.WorldGrid[worldInfo.CurrentCellIndex];
+
+		pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint({ currentCell.Left + currentCell.Width * 0.5f, currentCell.Bottom + currentCell.Height * 0.5f }));
+
+		pPlayer->SetToSeek();
+
+		return Elite::BehaviorState::Success;
+	}
+
 	Elite::BehaviorState ChangeToSeekHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Change to seek\n";
+		std::cout << "Change to seek house\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -48,13 +88,18 @@ namespace BT_Actions
 		if (!pBlackboard->GetData("TargetHouse", nextTarget))
 			return Elite::BehaviorState::Failure;
 
+
+		const AgentInfo& playerInfo{ pPlayer->GetInfo() };
+		WorldInfoExtended& worldInfo{ pPlayer->GetWorldInfo() };
+
+		worldInfo.WorldGrid[worldInfo.PositionToIndex(playerInfo.Position)].IsVisited = true;
+
 		pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint(nextTarget.Center));
 
 		pPlayer->SetToSeek();
 
 		return Elite::BehaviorState::Success;
 	}
-
 
 	Elite::BehaviorState AddToVisitedHouses(Elite::Blackboard* pBlackboard)
 	{
@@ -93,6 +138,13 @@ namespace BT_Actions
 		AgentInfo& playerInfo{ pPlayer->GetInfo() };
 
 
+		while (house.HouseGrid[house.CurrentCellIndex].IsVisited)
+		{
+			if (house.CurrentCellIndex == static_cast<int>(house.HouseGrid.size() - 1))
+				break;
+			house.CurrentCellIndex++;
+		}
+
 		if (house.HouseGrid[house.CurrentCellIndex].IsInBounds(playerInfo.Position))
 		{
 			house.HouseGrid[house.CurrentCellIndex].IsVisited = true;
@@ -106,6 +158,9 @@ namespace BT_Actions
 
 		pBlackboard->ChangeData("TargetHouse", house);
 
+		WorldInfoExtended& worldInfo{ pPlayer->GetWorldInfo() };
+
+		worldInfo.WorldGrid[worldInfo.PositionToIndex(playerInfo.Position)].IsVisited = true;
 
 		pPlayer->SetTarget({ currentCell.Left + currentCell.Width * 0.5f, currentCell.Bottom + currentCell.Height * 0.5f });
 
@@ -116,7 +171,7 @@ namespace BT_Actions
 
 	Elite::BehaviorState PickUpItem(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Change to seek\n";
+		std::cout << "Pick up item\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -125,13 +180,36 @@ namespace BT_Actions
 		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
 			return Elite::BehaviorState::Failure;
 
-		ItemInfoExtended nextTarget;
+		EntityInfoExtended nextTarget;
 		if (!pBlackboard->GetData("ItemTarget", nextTarget))
 			return Elite::BehaviorState::Failure;
 
+		ItemInfo item{};
+		pInterface->Item_GetInfo(nextTarget.AsEntityInfo(), item);
+
 		AgentInfo& playerInfo{ pPlayer->GetInfo() };
 
-		if (Elite::Square(playerInfo.GrabRange) > nextTarget.Location.DistanceSquared(playerInfo.Position))
+		HouseInfoExtended house;
+		if (!pBlackboard->GetData("TargetHouse", house))
+			return Elite::BehaviorState::Failure;
+
+		if (house.IsInit)
+		{
+			int i = house.PositionToIndex(playerInfo.Position);
+			if (i != -1)
+				house.HouseGrid[i].IsVisited = true;
+
+			pBlackboard->ChangeData("TargetHouse", house);
+		}
+
+
+		WorldInfoExtended& worldInfo{ pPlayer->GetWorldInfo() };
+
+		worldInfo.WorldGrid[worldInfo.PositionToIndex(playerInfo.Position)].IsVisited = true;
+
+
+
+		if (Elite::Square(playerInfo.GrabRange) < nextTarget.Location.DistanceSquared(playerInfo.Position))
 		{
 			pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint(nextTarget.Location));
 
@@ -139,43 +217,235 @@ namespace BT_Actions
 
 			return Elite::BehaviorState::Success;
 		}
-		else
+
+		switch (item.Type)
 		{
-			switch (nextTarget.Type)
-			{
-			case eItemType::SHOTGUN:
-			{
-				pInterface->Inventory_AddItem(0, nextTarget.AsItemInfo());
-			}
-			case eItemType::PISTOL:
-			{
-				pInterface->Inventory_AddItem(1, nextTarget.AsItemInfo());
-			}
-			case eItemType::FOOD:
-			{
-				if (!pInterface->Inventory_GetItem(2, ItemInfo{}))
-					pInterface->Inventory_AddItem(2, nextTarget.AsItemInfo());
-				else
-					pInterface->Inventory_AddItem(3, nextTarget.AsItemInfo());
-			}
-			case eItemType::MEDKIT:
-			{
-				pInterface->Inventory_AddItem(4, nextTarget.AsItemInfo());
-			}
-			case eItemType::GARBAGE:
-			{
-				//pInterface->Item_Destroy(nextTarget.AsItemInfo());
-			}
-			default:
-				return Elite::BehaviorState::Failure;
-				break;
-			}
-
-			pBlackboard->ChangeData("ItemTarget", ItemInfoExtended{});
-			return  Elite::BehaviorState::Success;
-
-
+		case eItemType::SHOTGUN:
+		{
+			if (!pInterface->Item_Grab(nextTarget.AsEntityInfo(), item)) return Elite::BehaviorState::Failure;
+			pInterface->Inventory_RemoveItem(0);
+			pInterface->Inventory_AddItem(0, item);
 		}
+		case eItemType::PISTOL:
+		{
+			if (!pInterface->Item_Grab(nextTarget.AsEntityInfo(), item)) return Elite::BehaviorState::Failure;
+			pInterface->Inventory_RemoveItem(1);
+			pInterface->Inventory_AddItem(1, item);
+		}
+		case eItemType::FOOD:
+		{
+			if (!pInterface->Item_Grab(nextTarget.AsEntityInfo(), item)) return Elite::BehaviorState::Failure;
+			if (!pInterface->Inventory_GetItem(2, ItemInfo{}))
+			{
+				pInterface->Inventory_RemoveItem(2);
+				pInterface->Inventory_AddItem(2, item);
+			}
+			else
+			{
+				pInterface->Inventory_RemoveItem(3);
+				pInterface->Inventory_AddItem(3, item);
+			}
+		}
+		case eItemType::MEDKIT:
+		{
+			if (!pInterface->Item_Grab(nextTarget.AsEntityInfo(), item)) return Elite::BehaviorState::Failure;
+			pInterface->Inventory_RemoveItem(4);
+			pInterface->Inventory_AddItem(4, item);
+		}
+		case eItemType::GARBAGE:
+		{
+			pInterface->Item_Destroy(nextTarget.AsEntityInfo());
+		}
+		default:
+			return Elite::BehaviorState::Failure;
+			break;
+		}
+
+		pBlackboard->ChangeData("ItemTarget", EntityInfoExtended{});
+		return  Elite::BehaviorState::Success;
+
+
+	}
+
+	Elite::BehaviorState EvadeEnemy(Elite::Blackboard* pBlackboard)
+	{
+
+		std::cout << "Run from Enemy\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		EntityInfoExtended enemyTarget;
+		if (!pBlackboard->GetData("EnemyTarget", enemyTarget) || !enemyTarget.IsInit)
+			return Elite::BehaviorState::Failure;
+
+		EnemyInfo enemy{};
+		pInterface->Enemy_GetInfo(enemyTarget.AsEntityInfo(), enemy);
+
+		pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint(enemy.Location));
+
+		pPlayer->SetToFlee();
+
+		AgentInfo& playerInfo{ pPlayer->GetInfo() };
+
+		WorldInfoExtended& worldInfo{ pPlayer->GetWorldInfo() };
+
+		worldInfo.WorldGrid[worldInfo.PositionToIndex(playerInfo.Position)].IsVisited = true;
+
+		return  Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState EvadeAndShootEnemy(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Shoot enemy\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		EntityInfoExtended enemyTarget;
+		if (!pBlackboard->GetData("EnemyTarget", enemyTarget) || !enemyTarget.IsInit)
+			return Elite::BehaviorState::Failure;
+
+		ItemInfo currentInventoryItem{};
+
+		int weaponSlot{ 0 };
+		//if 0 is false check 1
+		//if 0 is true use weapon 0
+		//if 1 is false rerturn fail
+		//if 1 is true use weapon 1
+		if (!pInterface->Inventory_GetItem(weaponSlot, currentInventoryItem))
+		{
+			if (pInterface->Weapon_GetAmmo(currentInventoryItem) <= 0)
+				if (!pInterface->Inventory_GetItem(++weaponSlot, currentInventoryItem))
+					return Elite::BehaviorState::Failure;
+		}
+
+		if (pInterface->Weapon_GetAmmo(currentInventoryItem) <= 0)
+			return Elite::BehaviorState::Failure;
+
+		EnemyInfo enemy{};
+		pInterface->Enemy_GetInfo(enemyTarget.AsEntityInfo(), enemy);
+
+		auto playerLookDir = Elite::OrientationToVector(pPlayer->GetInfo().Orientation);
+		auto playerToEnemy = (enemy.Location - pPlayer->GetInfo().Position).GetNormalized();
+
+		float dot = Elite::Dot(playerLookDir, playerToEnemy);
+
+
+
+		if (dot >= 1 - 0.00005)
+		{
+			pInterface->Inventory_UseItem(weaponSlot);
+		}
+
+
+
+		pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint(enemy.Location));
+
+		pPlayer->SetToFlee();
+
+		AgentInfo& playerInfo{ pPlayer->GetInfo() };
+
+		WorldInfoExtended& worldInfo{ pPlayer->GetWorldInfo() };
+
+		worldInfo.WorldGrid[worldInfo.PositionToIndex(playerInfo.Position)].IsVisited = true;
+		return  Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState UseMedicine(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Healing\n";
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		ItemInfo currentInventoryItem{};
+		if (!pInterface->Inventory_GetItem(4, currentInventoryItem))
+			return Elite::BehaviorState::Failure;
+
+		if (pInterface->Medkit_GetHealth(currentInventoryItem) <= 0)
+			return Elite::BehaviorState::Failure;
+
+		pInterface->Inventory_UseItem(4);
+
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState UseFood(Elite::Blackboard* pBlackboard)
+	{
+
+		std::cout << "*NOM*\n";
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		ItemInfo currentInventoryItem{};
+		int foodSlot{ 2 };
+		//if 2 is false check 3
+		//if 2 is true use food 2
+		//if 3 is false rerturn fail
+		//if 3 is true use food 3
+		if (!pInterface->Inventory_GetItem(foodSlot, currentInventoryItem))
+		{
+			if (pInterface->Food_GetEnergy(currentInventoryItem) <= 0)
+				if (!pInterface->Inventory_GetItem(++foodSlot, currentInventoryItem))
+					return Elite::BehaviorState::Failure;
+		}
+
+		if (pInterface->Food_GetEnergy(currentInventoryItem) <= 0)
+			return Elite::BehaviorState::Failure;
+
+		pInterface->Inventory_UseItem(foodSlot);
+
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState LookForEnemy(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Where tf he at\n";
+
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return Elite::BehaviorState::Failure;
+
+		pPlayer->SetToTurn();
+
+		return Elite::BehaviorState::Success;
+	}
+
+	Elite::BehaviorState AvoidPurgeZone(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "RUN!!!\n";
+
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return Elite::BehaviorState::Failure;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return Elite::BehaviorState::Failure;
+
+		EntityInfoExtended purgeTarget;
+		if (!pBlackboard->GetData("PurgeTarget", purgeTarget) || !purgeTarget.IsInit)
+			return Elite::BehaviorState::Failure;
+
+		PurgeZoneInfo purge{};
+		pInterface->PurgeZone_GetInfo(purgeTarget.AsEntityInfo(), purge);
+
+
+		pPlayer->SetTarget(pInterface->NavMesh_GetClosestPathPoint(purge.Center));
+
+		pPlayer->SetToFlee();
+
+		return Elite::BehaviorState::Success;
 	}
 }
 
@@ -238,7 +508,6 @@ namespace BT_Conditions
 
 		return true;
 	}
-
 
 	bool HasNotVisitedHouse(Elite::Blackboard* pBlackboard)
 	{
@@ -311,36 +580,36 @@ namespace BT_Conditions
 
 	bool HasSeenItem(Elite::Blackboard* pBlackboard)
 	{
-
-		//ItemInfoExtended target{};
-		//if (pBlackboard->GetData("Player", target) && target.IsInit)
+		std::cout << "OOOH SHINY!!\n";
+		//EntityInfoExtended target{};
+		//if (pBlackboard->GetData("ItemTarget", target) && target.IsInit)
 		//	return true;
 
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return false;
 
-		std::vector<ItemInfoExtended>* pItemsInFov;
+		std::vector<EntityInfoExtended>* pEnititiesInFov;
 
-		if (!pBlackboard->GetData("ItemsInFov", pItemsInFov) || !pItemsInFov)
+		if (!pBlackboard->GetData("EnitiesInFov", pEnititiesInFov) || !pEnititiesInFov)
 			return false;
 
-		if (pItemsInFov->empty())
+		if (pEnititiesInFov->empty())
 			return false;
 
-		ItemInfoExtended closest{};
+		EntityInfoExtended closest{};
 
 		AgentInfo& playerInfo{ pPlayer->GetInfo() };
 
 		float closestDistSqrt{ FLT_MAX };
 
-		for (auto& item : *pItemsInFov)
+		for (auto& enitity : *pEnititiesInFov)
 		{
-			float distSqrt = item.Location.DistanceSquared(playerInfo.Position);
-			if (distSqrt < closestDistSqrt)
+			float distSqrt = enitity.Location.DistanceSquared(playerInfo.Position);
+			if (distSqrt < closestDistSqrt && enitity.Type == eEntityType::ITEM)
 			{
 				closestDistSqrt = distSqrt;
-				closest = item;
+				closest = enitity;
 			}
 		}
 
@@ -354,8 +623,8 @@ namespace BT_Conditions
 
 	bool IsItemValuable(Elite::Blackboard* pBlackboard)
 	{
-
-		ItemInfoExtended target{};
+		std::cout << "Is better?\n";
+		EntityInfoExtended target{};
 		if (!pBlackboard->GetData("ItemTarget", target) || !target.IsInit)
 			return false;
 
@@ -363,44 +632,187 @@ namespace BT_Conditions
 		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
 			return false;
 
-		std::vector<eItemType> bestInvent{};
-		if (!pBlackboard->GetData("BestInventory", bestInvent) || bestInvent.empty())
+		ItemInfo item{};
+
+		if (!pInterface->Item_GetInfo(target.AsEntityInfo(), item))
 			return false;
 
 
-
-		switch (target.Type)
+		switch (item.Type)
 		{
 		case eItemType::SHOTGUN:
 		{
 			ItemInfo currentInventoryItem{};
 			if (!pInterface->Inventory_GetItem(0, currentInventoryItem)) return true;
-			return pInterface->Weapon_GetAmmo(currentInventoryItem) <= 0;
+			return pInterface->Weapon_GetAmmo(currentInventoryItem) <= pInterface->Weapon_GetAmmo(item);
 		}
 		case eItemType::PISTOL:
 		{
 			ItemInfo currentInventoryItem{};
 			if (!pInterface->Inventory_GetItem(1, currentInventoryItem)) return true;
-			return pInterface->Weapon_GetAmmo(currentInventoryItem) <= 0;
+			return pInterface->Weapon_GetAmmo(currentInventoryItem) <= pInterface->Weapon_GetAmmo(item);
 		}
 		case eItemType::FOOD:
 		{
 			ItemInfo currentInventoryItem{};
-			if (!pInterface->Inventory_GetItem(2, currentInventoryItem)) return true;
-			return !pInterface->Inventory_GetItem(3, currentInventoryItem);
+			if (!pInterface->Inventory_GetItem(2, currentInventoryItem) || !pInterface->Inventory_GetItem(3, currentInventoryItem)) return true;
+			return pInterface->Food_GetEnergy(currentInventoryItem) <= pInterface->Food_GetEnergy(item);
 		}
 		case eItemType::MEDKIT:
 		{
 			ItemInfo currentInventoryItem{};
-			return !pInterface->Inventory_GetItem(4, currentInventoryItem);
+			if (!pInterface->Inventory_GetItem(4, currentInventoryItem)) return true;
+			return pInterface->Medkit_GetHealth(currentInventoryItem) <= pInterface->Medkit_GetHealth(item);
 		}
 		case eItemType::GARBAGE:
 		{
-			return false;
+			return true;
 		}
 		default:
 			return false;
 		}
+	}
+
+	bool HasSeenEnemy(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Enemy spotted\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return false;
+
+		std::vector<EntityInfoExtended>* pEnititiesInFov;
+
+		if (!pBlackboard->GetData("EnitiesInFov", pEnititiesInFov) || !pEnititiesInFov)
+			return false;
+
+		if (pEnititiesInFov->empty())
+			return false;
+
+		EntityInfoExtended closest{};
+
+		AgentInfo& playerInfo{ pPlayer->GetInfo() };
+
+		float closestDistSqrt{ FLT_MAX };
+
+		for (auto& enitity : *pEnititiesInFov)
+		{
+			float distSqrt = enitity.Location.DistanceSquared(playerInfo.Position);
+			if (distSqrt < closestDistSqrt && enitity.Type == eEntityType::ENEMY)
+			{
+				closestDistSqrt = distSqrt;
+				closest = enitity;
+			}
+		}
+
+		if (!closest.IsInit)
+			return false;
+
+		pBlackboard->ChangeData("EnemyTarget", closest);
+
+
+		pBlackboard->ChangeData("LookingForEnemy", false);
+
+		return true;
+	}
+
+	bool HasViableWeapon(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "I got guns!!!\n";
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return false;
+
+		ItemInfo currentInventoryItem{};
+		if (pInterface->Inventory_GetItem(0, currentInventoryItem) || pInterface->Inventory_GetItem(1, currentInventoryItem))
+		{
+			return pInterface->Weapon_GetAmmo(currentInventoryItem) > 0;
+		}
+
+		return false;
+	}
+
+	bool IsLowHealth(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Gen 5 low health starts playing\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return false;
+
+
+		return pPlayer->GetInfo().Health < 3.f;
+	}
+
+	bool IsLowEnergy(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "*Panting*\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return false;
+
+
+		return pPlayer->GetInfo().Energy < 3.f;
+	}
+
+	bool IsInPurgeZone(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "UH OH im going to die\n";
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return false;
+
+		std::vector<EntityInfoExtended>* pEnititiesInFov;
+
+		if (!pBlackboard->GetData("EnitiesInFov", pEnititiesInFov) || !pEnititiesInFov)
+			return false;
+
+		if (pEnititiesInFov->empty())
+			return false;
+
+		IExamInterface* pInterface;
+		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
+			return false;
+
+
+		for (auto& entity : *pEnititiesInFov)
+		{
+			if (entity.Type != eEntityType::PURGEZONE)
+				continue;
+
+			PurgeZoneInfo purge{};
+
+			pInterface->PurgeZone_GetInfo(entity.AsEntityInfo(), purge);
+
+			if (!Utils::IsInCircle(pPlayer->GetInfo().Position, purge.Center, purge.Radius + 5))
+				continue;
+
+			pBlackboard->ChangeData("PurgeTarget", entity);
+
+			return true;
+
+		}
+
+
+
+		return false;
+	}
+
+	bool IsHit(Elite::Blackboard* pBlackboard)
+	{
+		std::cout << "Wassit?\n";
+
+		bool isLookingForEnemy{};
+		if (pBlackboard->GetData("LookingForEnemy", isLookingForEnemy) && isLookingForEnemy)
+			return true;
+
+		SteeringAgent* pPlayer;
+		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
+			return false;
+
+		isLookingForEnemy = pPlayer->GetInfo().WasBitten;
+
+		pBlackboard->ChangeData("LookingForEnemy", isLookingForEnemy);
+
+		return  isLookingForEnemy;
 	}
 }
 

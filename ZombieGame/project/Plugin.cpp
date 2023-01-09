@@ -14,7 +14,7 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 
 	//Bit information about the plugin
 	//Please fill this in!!
-	info.BotName = "MinionExam";
+	info.BotName = "Survivor";
 	info.Student_FirstName = "Aaron";
 	info.Student_LastName = "Frans";
 	info.Student_Class = "2DAE15";
@@ -27,7 +27,7 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 
 	m_pVisitedHouses = std::make_unique<std::vector<HouseInfoExtended>>();
 	m_pHousesInFov = std::make_unique<std::vector<HouseInfoExtended>>();
-	m_pItemsInFov = std::make_unique<std::vector<ItemInfoExtended>>();
+	m_pEnitiesInFov = std::make_unique<std::vector<EntityInfoExtended>>();
 
 	m_pBB = new Elite::Blackboard();
 
@@ -37,16 +37,41 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 	m_pBB->AddData("TargetHouse", HouseInfoExtended{});
 	m_pBB->AddData("VisitedHouses", m_pVisitedHouses.get());
 	m_pBB->AddData("HousesInFov", m_pHousesInFov.get());
-	m_pBB->AddData("ItemsInFov", m_pItemsInFov.get());
-	m_pBB->AddData("ItemTarget", ItemInfoExtended{});
-	m_pBB->AddData("BestInventory", m_BestInventory);
+	m_pBB->AddData("EnitiesInFov", m_pEnitiesInFov.get());
+	m_pBB->AddData("ItemTarget", EntityInfoExtended{});
+	m_pBB->AddData("EnemyTarget", EntityInfoExtended{});
+	m_pBB->AddData("PurgeTarget", EntityInfoExtended{});
+	m_pBB->AddData("LookingForEnemy", false);
 
 
 	m_pBT = new Elite::BehaviorTree(m_pBB,
 		new Elite::BehaviorSelector({
 
-			// Enemy Fight/ Avoid
-
+			//in purge zone run
+			new Elite::BehaviorSequence(
+				{
+					new Elite::BehaviorConditional(BT_Conditions::IsInPurgeZone),
+					new Elite::BehaviorAction(BT_Actions::AvoidPurgeZone),
+				}),
+			//when hit look for enemy
+			new Elite::BehaviorSequence(
+				{
+					new Elite::BehaviorConditional(BT_Conditions::IsHit),
+					new Elite::BehaviorInvertConditional(BT_Conditions::HasSeenEnemy),
+					new Elite::BehaviorAction(BT_Actions::LookForEnemy),
+				}),
+			//Low health -> heal
+			new Elite::BehaviorSequence(
+				{
+					new Elite::BehaviorConditional(BT_Conditions::IsLowHealth),
+					new Elite::BehaviorAction(BT_Actions::UseMedicine),
+				}),
+			//Low food -> eat
+			new Elite::BehaviorSequence(
+				{
+					new Elite::BehaviorConditional(BT_Conditions::IsLowEnergy),
+					new Elite::BehaviorAction(BT_Actions::UseFood),
+				}),
 			//When seen item Evaluate and pick it up
 			new Elite::BehaviorSequence(
 				{
@@ -84,8 +109,22 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 					new Elite::BehaviorConditional(BT_Conditions::HasNotVisitedHouse),
 					new Elite::BehaviorAction(BT_Actions::ChangeToSeekHouse)
 				}),
+			// Enemy Fight/ Avoid
+			new Elite::BehaviorSequence(
+				{
+					new Elite::BehaviorConditional(BT_Conditions::HasSeenEnemy),
+					new Elite::BehaviorSelector(
+					{
+						new Elite::BehaviorSequence(
+						{
+							new Elite::BehaviorInvertConditional(BT_Conditions::HasViableWeapon),
+							new Elite::BehaviorAction(BT_Actions::EvadeEnemy),
+						}),
+						new Elite::BehaviorAction(BT_Actions::EvadeAndShootEnemy),
+					}),
+				}),
 			//Explore World
-			new Elite::BehaviorAction(BT_Actions::ChangeToWander)
+			new Elite::BehaviorAction(BT_Actions::ChangeExploreWorld)
 			})
 	);
 }
@@ -105,7 +144,7 @@ void Plugin::DllShutdown()
 //Called only once, during initialization
 void Plugin::InitGameDebugParams(GameDebugParams& params)
 {
-	params.AutoFollowCam = true; //Automatically follow the AI? (Default = true)
+	params.AutoFollowCam = false; //Automatically follow the AI? (Default = true)
 	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
 	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
@@ -119,7 +158,12 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
-	params.Seed = 36;
+
+
+	
+	//params.Seed = 30;
+	params.Seed = -1;
+	params.SpawnZombieOnRightClick = true;
 }
 
 //Only Active in DEBUG Mode
@@ -195,7 +239,7 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	//Use the Interface (IAssignmentInterface) to 'interface' with the AI_Framework
 	m_pSteeringAgent->UpdateAgentInfo(m_pInterface->Agent_GetInfo());
 	*m_pHousesInFov = GetHousesInFOV();
-	*m_pItemsInFov = GetItemsInFOV();
+	*m_pEnitiesInFov = GetEntitiesInFOV();
 
 	m_pBT->Update(dt);
 
@@ -207,9 +251,9 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 
 	//uses m_pInterface->Fov_GetHouseByIndex(...)
 
-	auto vEntitiesInFOV = GetEntitiesInFOV(); //uses m_pInterface->Fov_GetEntityByIndex(...)
 
-	for (auto& e : vEntitiesInFOV)
+
+	for (auto& e : *m_pEnitiesInFov)
 	{
 		if (e.Type == eEntityType::PURGEZONE)
 		{
@@ -266,7 +310,6 @@ SteeringPlugin_Output Plugin::UpdateSteering(float dt)
 	//steering.AutoOrient = true; //Setting AutoOrient to TRue overrides the AngularVelocity
 	//
 	//steering.RunMode = m_CanRun; //If RunMode is True > MaxLinSpd is increased for a limited time (till your stamina runs out)
-
 	//SteeringPlugin_Output is works the exact same way a SteeringBehaviour output
 
 //@End (Demo Purposes)
@@ -283,16 +326,18 @@ void Plugin::Render(float dt) const
 
 	if (m_pSteeringAgent)
 	{
-		for (auto& cell : m_pSteeringAgent->GetWorldInfo().WorldGrid)
+		std::vector<Rect>& grid = m_pSteeringAgent->GetWorldInfo().WorldGrid;
+		float colorInc{ 1.f / grid.size() };
+		for (int i = 0; i < static_cast<int>(grid.size()); ++i)
 		{
 			std::vector<Elite::Vector2> housePoints{
-				Elite::Vector2{ cell.Left, cell.Bottom },
-				Elite::Vector2{ cell.Left, cell.Bottom + cell.Height },
-				Elite::Vector2{ cell.Left + cell.Width, cell.Bottom + cell.Height },
-				Elite::Vector2{ cell.Left + cell.Width, cell.Bottom },
+				Elite::Vector2{ grid[i].Left, grid[i].Bottom },
+				Elite::Vector2{ grid[i].Left, grid[i].Bottom + grid[i].Height },
+				Elite::Vector2{ grid[i].Left + grid[i].Width, grid[i].Bottom + grid[i].Height },
+				Elite::Vector2{ grid[i].Left + grid[i].Width, grid[i].Bottom },
 			};
 
-			if (cell.IsVisited)
+			if (grid[i].IsVisited)
 			{
 				m_pInterface->Draw_Polygon(&housePoints[0], 4, { 0,1,1 });
 			}
@@ -300,7 +345,6 @@ void Plugin::Render(float dt) const
 			{
 				m_pInterface->Draw_Polygon(&housePoints[0], 4, { 0,0,1 });
 			}
-
 		}
 	}
 
@@ -345,7 +389,7 @@ vector<HouseInfoExtended> Plugin::GetHousesInFOV() const
 		if (m_pInterface->Fov_GetHouseByIndex(i, hi))
 		{
 
-			hiEx.LoadHouseInfo(hi, m_pInterface->Agent_GetInfo().AgentSize * 4);
+			hiEx.LoadHouseInfo(hi, m_pInterface->Agent_GetInfo().AgentSize * 6);
 			vHousesInFOV.push_back(hiEx);
 			continue;
 		}
@@ -356,16 +400,19 @@ vector<HouseInfoExtended> Plugin::GetHousesInFOV() const
 	return vHousesInFOV;
 }
 
-vector<EntityInfo> Plugin::GetEntitiesInFOV() const
+vector<EntityInfoExtended> Plugin::GetEntitiesInFOV() const
 {
-	vector<EntityInfo> vEntitiesInFOV = {};
+	vector<EntityInfoExtended> vEntitiesInFOV = {};
 
 	EntityInfo ei = {};
+	EntityInfoExtended eiEx = {};
 	for (int i = 0;; ++i)
 	{
 		if (m_pInterface->Fov_GetEntityByIndex(i, ei))
 		{
-			vEntitiesInFOV.push_back(ei);
+
+			eiEx.LoadItemInfo(ei);
+			vEntitiesInFOV.push_back(eiEx);
 			continue;
 		}
 
@@ -375,33 +422,3 @@ vector<EntityInfo> Plugin::GetEntitiesInFOV() const
 	return vEntitiesInFOV;
 }
 
-std::vector<ItemInfoExtended> Plugin::GetItemsInFOV() const
-{
-	vector<ItemInfoExtended> vItemsInFOV = {};
-
-	EntityInfo ei = {};
-	for (int i = 0;; ++i)
-	{
-		if (m_pInterface->Fov_GetEntityByIndex(i, ei))
-		{
-			switch (ei.Type)
-			{
-			case eEntityType::ITEM:
-				ItemInfoExtended item{};
-				ItemInfo i{};
-
-				m_pInterface->Item_GetInfo(ei, i);
-				item.LoadItemInfo(i);
-
-				vItemsInFOV.push_back(item);
-				break;
-			}
-
-			continue;
-		}
-
-		break;
-	}
-
-	return vItemsInFOV;
-}

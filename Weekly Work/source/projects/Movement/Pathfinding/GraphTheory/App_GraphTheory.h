@@ -38,5 +38,11 @@ private:
 	//C++ make the class non-copyable
 	App_GraphTheory(const App_GraphTheory&) = delete;
 	App_GraphTheory& operator=(const App_GraphTheory&) = delete;
+
+	//Gready color algo
+	void ColorGraph();
+	std::vector<Elite::Color> m_Colors{ {1,0,0}, {0,1,0}, {0,0,1}, {0,1,1}, {1,0,1}, {1,1,0}, {1,1,1} };
+
+	bool IsSameColor(const Elite::Color& c1, const Elite::Color& c2) const;
 };
 #endif
