@@ -1,7 +1,6 @@
 #pragma once
 #include "IExamPlugin.h"
 #include "Exam_HelperStructs.h"
-#include "Ai\BT\EliteData\EBlackboard.h"
 #include "Ai\BT\EliteDecisionMaking\EliteBehaviorTree\EBehaviorTree.h"
 #include "Ai\Movement\SteeringAgent.h"
 #include "DataStructs\DataStructs.h"
@@ -9,7 +8,7 @@
 class IBaseInterface;
 class IExamInterface;
 
-class Plugin :public IExamPlugin
+class Plugin : public IExamPlugin
 {
 public:
 	Plugin() {};

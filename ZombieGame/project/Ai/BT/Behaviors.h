@@ -24,7 +24,6 @@ namespace BT_Actions
 {
 	Elite::BehaviorState ChangeToWander(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Change to wander\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -36,7 +35,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState ChangeExploreWorld(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Exploring\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -75,7 +73,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState ChangeToSeekHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Change to seek house\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -103,7 +100,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState AddToVisitedHouses(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "visited house\n";
 		HouseInfoExtended house;
 		if (!pBlackboard->GetData("TargetHouse", house) || !house.IsInit)
 			return Elite::BehaviorState::Failure;
@@ -120,7 +116,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState ExploreHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Looting\n";
 		HouseInfoExtended house;
 		if (!pBlackboard->GetData("TargetHouse", house) || !house.IsInit)
 			return Elite::BehaviorState::Failure;
@@ -171,7 +166,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState PickUpItem(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Pick up item\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -269,8 +263,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState EvadeEnemy(Elite::Blackboard* pBlackboard)
 	{
-
-		std::cout << "Run from Enemy\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -301,7 +293,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState EvadeAndShootEnemy(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Shoot enemy\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -362,7 +353,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState UseMedicine(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Healing\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
 			return Elite::BehaviorState::Failure;
@@ -381,8 +371,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState UseFood(Elite::Blackboard* pBlackboard)
 	{
-
-		std::cout << "*NOM*\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
 			return Elite::BehaviorState::Failure;
@@ -410,8 +398,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState LookForEnemy(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Where tf he at\n";
-
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return Elite::BehaviorState::Failure;
@@ -423,7 +409,6 @@ namespace BT_Actions
 
 	Elite::BehaviorState AvoidPurgeZone(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "RUN!!!\n";
 
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
@@ -458,8 +443,6 @@ namespace BT_Conditions
 {
 	bool HasSeenHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "see house\n";
-
 		HouseInfoExtended target;
 		if (pBlackboard->GetData("TargetHouse", target) && target.IsInit)
 			return true;
@@ -511,8 +494,6 @@ namespace BT_Conditions
 
 	bool HasNotVisitedHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "have i been here before?\n";
-
 		std::vector<HouseInfoExtended>* pVisited;
 
 		if (!pBlackboard->GetData("VisitedHouses", pVisited) || !pVisited)
@@ -536,7 +517,6 @@ namespace BT_Conditions
 
 	bool IsInHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "am i Inside?\n";
 
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
@@ -558,8 +538,6 @@ namespace BT_Conditions
 
 	bool HasFinishedLootingHouse(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "No more Loot?\n";
-
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return false;
@@ -580,10 +558,6 @@ namespace BT_Conditions
 
 	bool HasSeenItem(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "OOOH SHINY!!\n";
-		//EntityInfoExtended target{};
-		//if (pBlackboard->GetData("ItemTarget", target) && target.IsInit)
-		//	return true;
 
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
@@ -623,7 +597,6 @@ namespace BT_Conditions
 
 	bool IsItemValuable(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Is better?\n";
 		EntityInfoExtended target{};
 		if (!pBlackboard->GetData("ItemTarget", target) || !target.IsInit)
 			return false;
@@ -675,7 +648,6 @@ namespace BT_Conditions
 
 	bool HasSeenEnemy(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Enemy spotted\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return false;
@@ -717,7 +689,6 @@ namespace BT_Conditions
 
 	bool HasViableWeapon(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "I got guns!!!\n";
 		IExamInterface* pInterface;
 		if (!pBlackboard->GetData("Interface", pInterface) || !pInterface)
 			return false;
@@ -733,7 +704,6 @@ namespace BT_Conditions
 
 	bool IsLowHealth(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Gen 5 low health starts playing\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return false;
@@ -744,7 +714,6 @@ namespace BT_Conditions
 
 	bool IsLowEnergy(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "*Panting*\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return false;
@@ -755,7 +724,6 @@ namespace BT_Conditions
 
 	bool IsInPurgeZone(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "UH OH im going to die\n";
 		SteeringAgent* pPlayer;
 		if (!pBlackboard->GetData("Player", pPlayer) || !pPlayer)
 			return false;
@@ -798,8 +766,6 @@ namespace BT_Conditions
 
 	bool IsHit(Elite::Blackboard* pBlackboard)
 	{
-		std::cout << "Wassit?\n";
-
 		bool isLookingForEnemy{};
 		if (pBlackboard->GetData("LookingForEnemy", isLookingForEnemy) && isLookingForEnemy)
 			return true;

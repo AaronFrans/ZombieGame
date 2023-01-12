@@ -60,6 +60,12 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 					new Elite::BehaviorInvertConditional(BT_Conditions::HasSeenEnemy),
 					new Elite::BehaviorAction(BT_Actions::LookForEnemy),
 				}),
+			new Elite::BehaviorSequence(
+				{
+					new Elite::BehaviorConditional(BT_Conditions::HasSeenEnemy),
+					new Elite::BehaviorConditional(BT_Conditions::HasViableWeapon),
+					new Elite::BehaviorAction(BT_Actions::EvadeAndShootEnemy),
+				}),
 			//Low health -> heal
 			new Elite::BehaviorSequence(
 				{
@@ -113,15 +119,8 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 			new Elite::BehaviorSequence(
 				{
 					new Elite::BehaviorConditional(BT_Conditions::HasSeenEnemy),
-					new Elite::BehaviorSelector(
-					{
-						new Elite::BehaviorSequence(
-						{
-							new Elite::BehaviorInvertConditional(BT_Conditions::HasViableWeapon),
-							new Elite::BehaviorAction(BT_Actions::EvadeEnemy),
-						}),
-						new Elite::BehaviorAction(BT_Actions::EvadeAndShootEnemy),
-					}),
+					new Elite::BehaviorInvertConditional(BT_Conditions::HasViableWeapon),
+					new Elite::BehaviorAction(BT_Actions::EvadeEnemy),
 				}),
 			//Explore World
 			new Elite::BehaviorAction(BT_Actions::ChangeExploreWorld)

@@ -40,9 +40,6 @@ void App_GraphTheory::Update(float deltaTime)
 
 	auto eulerFinder = EulerianPath<GraphNode2D, GraphConnection2D>(m_pGraph2D);
 	Eulerianity eulerianity = eulerFinder.IsEulerian();
-
-
-
 	if (eulerianity == Eulerianity::notEulerian)
 	{
 		cout << "Not Euler\n";
@@ -63,7 +60,6 @@ void App_GraphTheory::Update(float deltaTime)
 		cout << "\n";
 
 	}
-
 
 	ColorGraph();
 
