@@ -126,6 +126,7 @@ void Plugin::Initialize(IBaseInterface* pInterface, PluginInfo& info)
 			new Elite::BehaviorAction(BT_Actions::ChangeExploreWorld)
 			})
 	);
+
 }
 
 //Called only once
@@ -144,7 +145,7 @@ void Plugin::DllShutdown()
 void Plugin::InitGameDebugParams(GameDebugParams& params)
 {
 	params.AutoFollowCam = false; //Automatically follow the AI? (Default = true)
-	params.RenderUI = true; //Render the IMGUI Panel? (Default = true)
+	params.RenderUI = false; //Render the IMGUI Panel? (Default = true)
 	params.SpawnEnemies = true; //Do you want to spawn enemies? (Default = true)
 	params.EnemyCount = 20; //How many enemies? (Default = 20)
 	params.GodMode = false; //GodMode > You can't die, can be useful to inspect certain behaviors (Default = false)
@@ -157,8 +158,6 @@ void Plugin::InitGameDebugParams(GameDebugParams& params)
 	params.SpawnPurgeZonesOnMiddleClick = true;
 	params.PrintDebugMessages = true;
 	params.ShowDebugItemNames = true;
-
-
 	
 	//params.Seed = 30;
 	params.Seed = -1;

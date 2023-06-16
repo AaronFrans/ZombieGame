@@ -1,2 +1,8 @@
-﻿  Plugin.cpp
+﻿  stdafx.cpp
+  EBehaviorTree.cpp
+  SteeringAgent.cpp
+  SteeringBehavior.cpp
+  Plugin.cpp
+  Generating Code...
+     Creating library D:\Gpp\GameplayProgramming\ZombieGame\project\..\_DEMO_DEBUG\GPP_Plugin_d.lib and object D:\Gpp\GameplayProgramming\ZombieGame\project\..\_DEMO_DEBUG\GPP_Plugin_d.exp
   GPP_Exam.vcxproj -> D:\Gpp\GameplayProgramming\ZombieGame\_DEMO_DEBUG\GPP_Plugin_d.dll
